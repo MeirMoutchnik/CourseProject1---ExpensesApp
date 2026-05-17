@@ -3,10 +3,10 @@ function loadExpenses() {
   if (expenses == null) {
     expenses = [];
   }
-document.getElementById("expense-table-body").innerHTML = "";
-expenses.forEach((expense, index) => {
-  let row = document.createElement("tr");
-  row.innerHTML = `
+  document.getElementById("expense-table-body").innerHTML = "";
+  expenses.forEach((expense, index) => {
+    let row = document.createElement("tr");
+    row.innerHTML = `
   <td>${expense.category}</td>
   <td>${expense.description}</td>
   <td>${expense.amount}</td>
@@ -14,18 +14,73 @@ expenses.forEach((expense, index) => {
   <td><button class="edit-btn" onclick="editExpense(${index})">Edit</button></td>
   <td><button class="delete-btn" onclick="deleteExpense(${index})">Delete</button></td>
   `;
-  document.getElementById("expense-table-body").appendChild(row);
-}); 
+    document.getElementById("expense-table-body").appendChild(row);
+  });
 }
 
 loadExpenses();
+
+const PREDEFINED_CATEGORIES = [
+  "food",
+  "transport",
+  "housing",
+  "utilities",
+  "entertainment",
+];
+
+function toggleOtherCategory() {
+  const isOther = document.getElementById("category-select").value === "other";
+  const wrap = document.getElementById("other-category-wrap");
+  const input = document.getElementById("other-category");
+  const dateWrap = document.getElementById("date-wrap");
+  wrap.hidden = !isOther;
+  input.required = isOther;
+  dateWrap.classList.toggle("full-width", isOther);
+  if (!isOther) {
+    input.value = "";
+  }
+}
+
+function getCategory() {
+  const select = document.getElementById("category-select");
+  if (select.value === "other") {
+    return document.getElementById("other-category").value.trim();
+  }
+  return select.value;
+}
+
+function setCategoryFields(category) {
+  const select = document.getElementById("category-select");
+  const otherInput = document.getElementById("other-category");
+  if (PREDEFINED_CATEGORIES.includes(category)) {
+    select.value = category;
+    otherInput.value = "";
+  } else {
+    select.value = "other";
+    otherInput.value = category;
+  }
+  toggleOtherCategory();
+}
+
+document
+  .getElementById("category-select")
+  .addEventListener("change", toggleOtherCategory);
+toggleOtherCategory();
 
 let editingIndex = null;
 
 function addExpense(e) {
   e.preventDefault();
   let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-  let category = document.getElementById("category-select").value;
+  if (
+    document.getElementById("category-select").value === "other" &&
+    !document.getElementById("other-category").value.trim()
+  ) {
+    alert("Please specify the category");
+    return;
+  }
+
+  let category = getCategory();
   let description = document.getElementById("description").value;
   let amount = document.getElementById("amount").value;
   let date = document.getElementById("date").value;
@@ -40,7 +95,6 @@ function addExpense(e) {
     return;
   }
 
-  
   if (date > new Date().toISOString().split("T")[0]) {
     alert("The date must be today or before today");
     return;
@@ -55,6 +109,7 @@ function addExpense(e) {
   }
   localStorage.setItem("expenses", JSON.stringify(expenses));
   document.getElementById("expense-form").reset();
+  toggleOtherCategory();
   document.getElementById("submit").value = "Add Expense";
   loadExpenses();
 }
@@ -62,12 +117,11 @@ function addExpense(e) {
 function deleteExpense(index) {
   let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
   let ok = confirm("Are you sure you want to delete this expense?");
-  if (ok) { 
+  if (ok) {
     expenses.splice(index, 1);
     localStorage.setItem("expenses", JSON.stringify(expenses));
     loadExpenses();
-  }
-  else {
+  } else {
     alert("The expense was not deleted");
   }
 }
@@ -75,7 +129,7 @@ function deleteExpense(index) {
 function editExpense(index) {
   let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
   let expense = expenses[index];
-  document.getElementById("category-select").value = expense.category;
+  setCategoryFields(expense.category);
   document.getElementById("description").value = expense.description;
   document.getElementById("amount").value = expense.amount;
   document.getElementById("date").value = expense.date;
