@@ -16,6 +16,13 @@ function loadExpenses() {
   `;
     document.getElementById("expense-table-body").appendChild(row);
   });
+  let totalRow = document.createElement("tr");
+  totalRow.className = "total-row";
+  totalRow.innerHTML = `
+  <td class="total-label">Total</td>
+  <td class="total-amount" colspan="5">${expenses.reduce((total, expense) => total + Number(expense.amount), 0)}</td>
+  `;
+  document.getElementById("expense-table-body").appendChild(totalRow);
 }
 
 loadExpenses();
@@ -121,8 +128,6 @@ function deleteExpense(index) {
     expenses.splice(index, 1);
     localStorage.setItem("expenses", JSON.stringify(expenses));
     loadExpenses();
-  } else {
-    alert("The expense was not deleted");
   }
 }
 
