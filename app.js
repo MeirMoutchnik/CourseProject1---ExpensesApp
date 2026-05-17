@@ -20,6 +20,8 @@ expenses.forEach((expense, index) => {
 
 loadExpenses();
 
+let editingIndex = null;
+
 function addExpense(e) {
   e.preventDefault();
   let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
@@ -27,10 +29,33 @@ function addExpense(e) {
   let description = document.getElementById("description").value;
   let amount = document.getElementById("amount").value;
   let date = document.getElementById("date").value;
+
+  if (amount < 0) {
+    alert("The amount must be positive");
+    return;
+  }
+
+  if (amount > 100000) {
+    alert("The amount must be less than 100000");
+    return;
+  }
+
+  
+  if (date > new Date().toISOString().split("T")[0]) {
+    alert("The date must be today or before today");
+    return;
+  }
+
   let expense = { category, description, amount, date };
-  expenses.push(expense);
+  if (editingIndex !== null) {
+    expenses[editingIndex] = expense;
+    editingIndex = null;
+  } else {
+    expenses.push(expense);
+  }
   localStorage.setItem("expenses", JSON.stringify(expenses));
   document.getElementById("expense-form").reset();
+  document.getElementById("submit").value = "Add Expense";
   loadExpenses();
 }
 
@@ -54,8 +79,6 @@ function editExpense(index) {
   document.getElementById("description").value = expense.description;
   document.getElementById("amount").value = expense.amount;
   document.getElementById("date").value = expense.date;
-  expenses.splice(index, 1);
-  localStorage.setItem("expenses", JSON.stringify(expenses));
-  loadExpenses();
+  editingIndex = index;
+  document.getElementById("submit").value = "Update Expense";
 }
-
