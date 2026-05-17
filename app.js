@@ -1,143 +1,143 @@
-(function () {
-  const tbody = document.getElementById("expense-table-body");
-  const form = document.getElementById("expense-form");
-  const categorySelect = document.getElementById("category-select");
-  const customWrap = document.getElementById("category-custom-wrap");
-  const categoryInput = document.getElementById("category");
+function loadExpenses() {
+  let expenses = JSON.parse(localStorage.getItem("expenses"));
+  if (expenses == null) {
+    expenses = [];
+  }
+  document.getElementById("expense-table-body").innerHTML = "";
+  expenses.forEach((expense, index) => {
+    let row = document.createElement("tr");
+    row.innerHTML = `
+  <td>${expense.category}</td>
+  <td>${expense.description}</td>
+  <td>${expense.amount}</td>
+  <td>${expense.date}</td>
+  <td><button class="edit-btn" onclick="editExpense(${index})">Edit</button></td>
+  <td><button class="delete-btn" onclick="deleteExpense(${index})">Delete</button></td>
+  `;
+    document.getElementById("expense-table-body").appendChild(row);
+  });
+  let totalRow = document.createElement("tr");
+  totalRow.className = "total-row";
+  totalRow.innerHTML = `
+  <td class="total-label">Total</td>
+  <td class="total-amount" colspan="5">${expenses.reduce((total, expense) => total + Number(expense.amount), 0)}</td>
+  `;
+  document.getElementById("expense-table-body").appendChild(totalRow);
+}
 
-  function loadExpenses() {
-    if (!tbody) return;
+loadExpenses();
 
-    const totalRow = tbody.querySelector(".total-row");
-    if (!totalRow) return;
+const PREDEFINED_CATEGORIES = [
+  "food",
+  "transport",
+  "housing",
+  "utilities",
+  "entertainment",
+];
 
-    tbody.querySelectorAll("tr:not(.total-row)").forEach((row) => row.remove());
+function toggleOtherCategory() {
+  const isOther = document.getElementById("category-select").value === "other";
+  const wrap = document.getElementById("other-category-wrap");
+  const input = document.getElementById("other-category");
+  const dateWrap = document.getElementById("date-wrap");
+  wrap.hidden = !isOther;
+  input.required = isOther;
+  dateWrap.classList.toggle("full-width", isOther);
+  if (!isOther) {
+    input.value = "";
+  }
+}
 
-    let expenses = JSON.parse(localStorage.getItem("expenses"));
-    if (expenses == null) {
-      expenses = [];
-    }
+function getCategory() {
+  const select = document.getElementById("category-select");
+  if (select.value === "other") {
+    return document.getElementById("other-category").value.trim();
+  }
+  return select.value;
+}
 
-    let total = 0;
-    expenses.forEach((expense, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${expense.category}</td>
-        <td>${expense.description}</td>
-        <td>${expense.amount}</td>
-        <td>${expense.date}</td>
-        <td><button type="button" class="edit-btn" data-index="${index}">Edit</button></td>
-        <td><button type="button" class="delete-btn" data-index="${index}">Delete</button></td>
-      `;
-      total += Number(expense.amount) || 0;
-      tbody.insertBefore(row, totalRow);
-    });
+function setCategoryFields(category) {
+  const select = document.getElementById("category-select");
+  const otherInput = document.getElementById("other-category");
+  if (PREDEFINED_CATEGORIES.includes(category)) {
+    select.value = category;
+    otherInput.value = "";
+  } else {
+    select.value = "other";
+    otherInput.value = category;
+  }
+  toggleOtherCategory();
+}
 
-    const totalAmountCell = totalRow.querySelector(".total-amount");
-    if (totalAmountCell) {
-      totalAmountCell.textContent = total;
-    }
+document
+  .getElementById("category-select")
+  .addEventListener("change", toggleOtherCategory);
+toggleOtherCategory();
+
+let editingIndex = null;
+
+function addExpense(e) {
+  e.preventDefault();
+  let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+  if (
+    document.getElementById("category-select").value === "other" &&
+    !document.getElementById("other-category").value.trim()
+  ) {
+    alert("Please specify the category");
+    return;
   }
 
-  function addExpense(e) {
-    e.preventDefault();
+  let category = getCategory();
+  let description = document.getElementById("description").value;
+  let amount = document.getElementById("amount").value;
+  let date = document.getElementById("date").value;
 
-    if (categorySelect?.value === "other" && categoryInput) {
-      const v = categoryInput.value.trim();
-      if (!v) {
-        categoryInput.setCustomValidity("Please enter a category.");
-        categoryInput.reportValidity();
-        return;
-      }
-      categoryInput.setCustomValidity("");
-    }
+  if (amount < 0) {
+    alert("The amount must be positive");
+    return;
+  }
 
-    let expenses = JSON.parse(localStorage.getItem("expenses"));
-    if (expenses == null) {
-      expenses = [];
-    }
+  if (amount > 100000) {
+    alert("The amount must be less than 100000");
+    return;
+  }
 
-    const category =
-      categorySelect?.value === "other" && categoryInput?.value.trim()
-        ? categoryInput.value.trim()
-        : categorySelect?.value ?? "";
+  if (date > new Date().toISOString().split("T")[0]) {
+    alert("The date must be today or before today");
+    return;
+  }
 
-    const expense = {
-      category,
-      description: document.getElementById("description").value,
-      amount: document.getElementById("amount").value,
-      date: document.getElementById("date").value,
-    };
-
+  let expense = { category, description, amount, date };
+  if (editingIndex !== null) {
+    expenses[editingIndex] = expense;
+    editingIndex = null;
+  } else {
     expenses.push(expense);
-    localStorage.setItem("expenses", JSON.stringify(expenses));
-    form.reset();
-    syncCategoryOther();
-    loadExpenses();
   }
+  localStorage.setItem("expenses", JSON.stringify(expenses));
+  document.getElementById("expense-form").reset();
+  toggleOtherCategory();
+  document.getElementById("submit").value = "Add Expense";
+  loadExpenses();
+}
 
-  function deleteExpense(index) {
-    let expenses = JSON.parse(localStorage.getItem("expenses"));
-    if (expenses == null) {
-      expenses = [];
-    }
+function deleteExpense(index) {
+  let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+  let ok = confirm("Are you sure you want to delete this expense?");
+  if (ok) {
     expenses.splice(index, 1);
     localStorage.setItem("expenses", JSON.stringify(expenses));
     loadExpenses();
   }
+}
 
-  function editExpense(index) {
-    let expenses = JSON.parse(localStorage.getItem("expenses"));
-    if (expenses == null) {
-      expenses = [];
-    }
-    const expense = expenses[index];
-    if (!expense) return;
-
-    if (categorySelect) categorySelect.value = expense.category;
-    document.getElementById("description").value = expense.description;
-    document.getElementById("amount").value = expense.amount;
-    document.getElementById("date").value = expense.date;
-    syncCategoryOther();
-    deleteExpense(index);
-  }
-
-  function syncCategoryOther() {
-    if (!categorySelect || !customWrap || !categoryInput) return;
-
-    const isOther = categorySelect.value === "other";
-    customWrap.hidden = !isOther;
-    categoryInput.required = isOther;
-    categoryInput.disabled = !isOther;
-    if (!isOther) {
-      categoryInput.value = "";
-      categoryInput.setCustomValidity("");
-    }
-  }
-
-  if (tbody) {
-    tbody.addEventListener("click", (e) => {
-      const deleteBtn = e.target.closest(".delete-btn");
-      const editBtn = e.target.closest(".edit-btn");
-      if (deleteBtn) {
-        deleteExpense(Number(deleteBtn.dataset.index));
-      } else if (editBtn) {
-        editExpense(Number(editBtn.dataset.index));
-      }
-    });
-  }
-
-  if (form) {
-    form.addEventListener("submit", addExpense);
-  }
-
-  if (categorySelect && customWrap && categoryInput) {
-    categorySelect.addEventListener("change", syncCategoryOther);
-    categoryInput.addEventListener("input", () => {
-      categoryInput.setCustomValidity("");
-    });
-    syncCategoryOther();
-  }
-
-  loadExpenses();
-})();
+function editExpense(index) {
+  let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+  let expense = expenses[index];
+  setCategoryFields(expense.category);
+  document.getElementById("description").value = expense.description;
+  document.getElementById("amount").value = expense.amount;
+  document.getElementById("date").value = expense.date;
+  editingIndex = index;
+  document.getElementById("submit").value = "Update Expense";
+}
