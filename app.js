@@ -1,9 +1,22 @@
+const PREDEFINED_CATEGORIES = [
+  "food",
+  "transport",
+  "housing",
+  "utilities",
+  "entertainment",
+];
+
+let editingIndex = null;
+
 function loadExpenses() {
+  const tableBody = document.getElementById("expense-table-body");
+  if (!tableBody) return;
+
   let expenses = JSON.parse(localStorage.getItem("expenses"));
   if (expenses == null) {
     expenses = [];
   }
-  document.getElementById("expense-table-body").innerHTML = "";
+  tableBody.innerHTML = "";
   expenses.forEach((expense, index) => {
     let row = document.createElement("tr");
     row.innerHTML = `
@@ -14,7 +27,7 @@ function loadExpenses() {
   <td><button class="edit-btn" onclick="editExpense(${index})">Edit</button></td>
   <td><button class="delete-btn" onclick="deleteExpense(${index})">Delete</button></td>
   `;
-    document.getElementById("expense-table-body").appendChild(row);
+    tableBody.appendChild(row);
   });
   let totalRow = document.createElement("tr");
   totalRow.className = "total-row";
@@ -22,21 +35,14 @@ function loadExpenses() {
   <td class="total-label">Total</td>
   <td class="total-amount" colspan="5">${expenses.reduce((total, expense) => total + Number(expense.amount), 0)}</td>
   `;
-  document.getElementById("expense-table-body").appendChild(totalRow);
+  tableBody.appendChild(totalRow);
 }
 
-loadExpenses();
-
-const PREDEFINED_CATEGORIES = [
-  "food",
-  "transport",
-  "housing",
-  "utilities",
-  "entertainment",
-];
-
 function toggleOtherCategory() {
-  const isOther = document.getElementById("category-select").value === "other";
+  const select = document.getElementById("category-select");
+  if (!select) return;
+
+  const isOther = select.value === "other";
   const wrap = document.getElementById("other-category-wrap");
   const input = document.getElementById("other-category");
   const dateWrap = document.getElementById("date-wrap");
@@ -68,13 +74,6 @@ function setCategoryFields(category) {
   }
   toggleOtherCategory();
 }
-
-document
-  .getElementById("category-select")
-  .addEventListener("change", toggleOtherCategory);
-toggleOtherCategory();
-
-let editingIndex = null;
 
 function addExpense(e) {
   e.preventDefault();
@@ -140,4 +139,11 @@ function editExpense(index) {
   document.getElementById("date").value = expense.date;
   editingIndex = index;
   document.getElementById("submit").value = "Update Expense";
+}
+
+const categorySelect = document.getElementById("category-select");
+if (categorySelect) {
+  categorySelect.addEventListener("change", toggleOtherCategory);
+  toggleOtherCategory();
+  loadExpenses();
 }

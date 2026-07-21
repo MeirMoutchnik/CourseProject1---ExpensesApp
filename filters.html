@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Filters</title>
     <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
+    <script src="filters.js" defer></script>
 </head>
 <body>
     <nav>
@@ -16,6 +16,56 @@
     </nav>
     <h1>Filters</h1>
 
-    <script src="app.js"></script>
+    <form id="filter-form" class="filter-form">
+        <div class="form-group">
+            <label for="filter-year">Year</label>
+            <select id="filter-year" aria-label="Filter by year">
+                <option value="">All years</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-month">Month</label>
+            <select id="filter-month" aria-label="Filter by month" disabled>
+                <option value="">All months</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-day">Day</label>
+            <select id="filter-day" aria-label="Filter by day" disabled>
+                <option value="">All days</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-max-amount">Max amount</label>
+            <input
+                type="number"
+                id="filter-max-amount"
+                min="0"
+                step="any"
+                placeholder="Show expenses up to this amount"
+                aria-label="Filter by maximum amount"
+            />
+        </div>
+        <div class="form-group input-submit">
+            <button type="button" id="clear-filters" class="export-btn">Clear Filters</button>
+        </div>
+    </form>
+
+    <table id="filtered-expense-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="filtered-expense-table-body">
+            <tr class="total-row">
+                <td class="total-label">Total</td>
+                <td class="total-amount">0</td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 </html>
